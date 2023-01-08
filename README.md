@@ -6,3 +6,7 @@ WA - TACHI - WA
 Se pronuncia Watashiwa
 
 WATASHIWA KÉ?
+
+WATASHI NOOO
+
+WATASHIWA HAHA
