@@ -4,11 +4,7 @@ Este repositorio es parte del diplomado de Ciencia de Datos para proyectos socia
 Experimento:
 
 -WA - TACHI - WA
-
 -Se pronuncia Watashiwa
-
 -WATASHIWA KÉ?
-
 -WATASHI NOOO
-
 -WATASHIWA HAHA
