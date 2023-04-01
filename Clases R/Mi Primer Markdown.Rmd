@@ -5,9 +5,22 @@ date: 18/12/2022
 output: html_document
 ---
 
-#Código de la sesión 02
-##Primer código
-Este es el texto de mi R markdown y ahora colocaré mi primer código:
-'''{r}
-plot(cars)
-'''
+## Introducción
+
+Texto intoductorio...
+
+```{r}
+x = 5
+x
+```
+
+```{r Chunk1, include=FALSE}
+# Para configurar qué tipo de celda será esta hacemos click a configuración
+library(tidyverse)
+library(gapminder)
+```
+
+## Presentación del Problema
+
+
+## Estado de la Cuestión

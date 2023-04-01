@@ -1,0 +1,708 @@
+---
+title: "Trabajo Grupal R"
+author: 
+- "Afrania Palomino"
+- "Diana Obregón"
+- "José Guimaray"
+- "Leonel Figueroa"
+output: html_document
+---
+
+```{r load-packages, include=FALSE}
+options(scipen = 999)
+library(ggplot2)
+library(gganimate)
+library(sf)
+library(readr)
+library(stringr)
+library(remotes)
+library(magrittr)
+library(dplyr) 
+library(mapsPERU)
+library(readr)
+library(naniar)
+library(mapsPERU)
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(scales)
+
+```
+
+<br>
+
+# Análisis espacial a nivel regional de los recursos transferidos del Gobierno Nacional a los Gobiernos Locales durante pandemia en el año 2020
+
+<br>
+
+<br>
+
+## 1. Abstract
+
+El presente artículo muestra un análisis de diversas variables que describen la distribución de recursos y desarrollo del Proyecto Reactiva Perú 1 y 2, el cual se basó en la transferencia de recursos por parte del Ministerio de Vivienda, Construcción y Saneamiento (MVCS) a municipalidades locales del Perú con el objetivo de ejecutar obras de infraestructura. El análisis de las variables de distribución de recursos a nivel regional y provincial, población beneficiada y montos de inversión se logró a partir de su visualización en mapas y gráficos mediante el uso de los paquetes ggplot2 y mapsPERU que incluye el software estadístico R y su interfaz gráfica RStudio.
+
+<br>
+
+<br>
+
+## 2. Objetivo
+
+Los gráficos generados en el presente artículo presentarán los recursos transferidos del Gobierno Nacional a los gobiernos locales a través del Ministerio de Vivienda, Construcción y Sanemamiento, durante el periodo 2020, lo que nos pueden dar una muestra del nivel de cobertura de los montos transferidos a nivel departamental y provincial por parte del gobierno central.
+
+Asimismo, se podrá conocer la relación entre el monto transferido y el número de población beneficiaria  por el proyecto de inversión pública.   
+
+<br>
+
+<br>
+
+## 3. Metodología
+
+La metodología se basa en un análisis descriptivo de la información descargada en la Plataforma Nacional de datos abiertos del gobierno del Perú.Asimismo se presenta mapas de visualización a nivel regional y departamental.
+
+Los datos geoespaciales, conocidos como "shapefiles" contienen datos espaciales de representación vectorial que almacenan información de la ubicación de distintas entidades geográficas, la cual se puede representar con puntos, lineas o polígonos.En ese sentido, el paquete "ggplot2"es utilizado para la generación de mapas visualmente atractivos a partir de información geográfica almacenada en un shapefile, en el caso peruano estos estan delimitados a nivel departamental, provincial y distrital.
+
+El uso de mapas es un medio utilizado para reportar estadísticas oficiales producidas por instituciones del gobierno central con el fin de hacerlas más digeribles para el lector. Ejemplo de ello es el documento producido por el INEI “Mapa de pobreza monetaria provincial y distrital 2018”, el cual contiene indicadores de pobreza[^1], desagregada geográficamente a nivel de provincial y distrital, la cual constituye por su naturaleza un importante insumo para la priorización y la implementación de políticas sociales en los distritos más vulnerables del país (INEI, 2018). 
+
+<br>
+
+### 3.1.  Data:
+
+<br>
+
+**PROYECTOS REACTIVA PERÚ 1 Y 2:** La base de datos utilizada corresponde a los Proyectos ejecutados por municipalidades distritales y provinciales como parte del Reactiva Perú 1 y 2, el cual fue llevado a cabo por el Ministerio de Vivienda, Construcción y Saneamiento (MVCS).
+
+La base de datos muestra información de los Proyectos hasta junio del 2021 y se obtuvo del siguiente [enlace](https://www.datosabiertos.gob.pe/dataset/proyectos-reactiva-per%C3%BA.)
+
+De esta base de datos se recogieron las siguientes variables:
+
+***1. UBIGEO:*** Código del distrito donde se ubica el proyecto.
+
+***2. COD_REGION:*** Código de la región donde se ubica el proyecto.
+
+***3. COD_PROVINCIA:*** Código de la provincia donde se ubica el proyecto.
+
+***4. REGION:*** Región donde se ubica el proyecto.
+
+***5. PROVINCIA:*** Provincia donde se ubica el proyecto.
+
+***6. TOTALEMPLEOS:*** Número de empleos generados con la ejecución del proyecto.
+
+***7. POBLACIONBENEFICIARIA:*** Número de población beneficiada con el proyecto.
+
+***8. MONTODEINVERSIÓN:*** Monto total de inversión del proyecto.
+
+***9. MONTODETRANSFERENCIA2020:*** Monto transferido al gobierno local en el periodo 2020.
+
+***10. ESTADO:*** Etapa en la que se encuentra el proyecto.
+
+<br>
+
+Adicionalmente, se utilizó una base de datos complementaria para obtener la población de los distritos presentes en la base de datos sobre Proyectos Reactiva Perú.
+
+**POBLACION_2017:** La base de datos incluye información respecto a la población a nivel distrital teniendo como fuente el Censo Nacional 2017 y obteniendo la base de datos del siguiente [enlace](https://censos2017.inei.gob.pe/redatam/.)
+
+La base de datos incluyó las siguientes variables:
+
+***1. UBIGEO:*** Código del distrito.
+
+***2. COD_PROVINCIA:*** Código de la provincia.
+
+***3. POB_REG:*** Suma de la población total de los distritos que tuvieron proyectos ejecutados y concluidos en una determinada región.
+
+***4. POB_PROV:*** Suma de la población total de los distritos que tuvieron proyectos ejecutados y concluidos en una determinada provincia.
+
+***5. POB_DIST:*** Población total en el distrito.
+
+<br>
+
+El conjunto de las variables descritas permitieron la creación de las variables analizadas, siendo estas las siguientes:
+
+***1. DISTRIBUCIÓN DE LOS RECURSOS TRANSFERIDOS:*** Suma de los montos transferidos para la ejecución de los proyectos a nivel provincial y regional.
+
+***2. PORCENTAJE DEL COSTO EL PROYECTO CUBIERTO CON RECURSOS TRANSFERIDOS:*** Porcentaje del monto ejecutado en el proyecto que fue transferido por el MVCS a los gobiernos locales a nivel regional y provincial.
+
+***3. POBLACIÓN BENEFICIADA EN RELACIÓN A LA TOTALIDAD DE SU POBLACIÓN:*** Porcentaje de la población a nivel regional y distrital que fue beneficiada con los proyectos concluidos.
+
+***4. RELACIÓN ENTRE EMPLEOS GENERADOS Y MONTO DE INVERSIÓN:*** Relación que existe entre los montos invertidos en cada proyecto y los empleos generados durante su ejecución.
+
+***5. MONTO DE INVERSIÓN POR TIPO DE INVERSIÓN:*** Montos de inversión dirigidos a los tipos de inversión, ya sean estos para equipamiento urbano, pistas y veredas, o puentes.
+
+<br>
+
+### 3.2.  Técnica y Algoritmos aplicados: 
+
+<br>
+
+```{r eval=FALSE, echo=FALSE}
+
+#REVISAR AL FINAL. COMPARAR CON SCRIP R.
+
+#install.packages("reshape2")
+
+#install.packages("sf")
+library(sf)
+
+#install.packages("readr")
+library(readr)
+
+#install.packages("stringr")
+library(stringr)
+#Se usará la función "str_remove_all()"
+
+#install.packages("remotes")
+library(remotes)
+
+#install.packages("Rtools")
+
+#install.packages("ggplot2")
+library(ggplot2)
+
+#install.packages("magrittr") %>% pipe operator
+library(magrittr)
+
+#install.packages("dplyr")
+library(dplyr) 
+
+#install.packages("mapsPERU")
+library(mapsPERU)
+
+#install_github("musajajorge/mapsPERU")
+
+```
+
+<br>
+
+<br>
+
+### 3.3.  Procesamiento:
+
+<br>
+
+* Primero importamos nuestra base de datos y creamos nuestro objeto **'bd_reactiva_pyto'**.
+
+```{r   eval=TRUE,echo=TRUE }
+
+link <- "https://raw.githubusercontent.com/Diane-12/BD_Pytoreactiva/main/pyto_reactica_12_original_vs2.csv"
+bd_reactiva_pyto <- read.csv(link)
+
+```
+
+<br>
+
+* Exploramos nuestro objeto y sus variables:
+
+```{r   eval=FALSE, echo=TRUE }
+
+View(bd_reactiva_pyto)
+summary(bd_reactiva_pyto)
+
+```
+```{r   eval=TRUE, echo=FALSE }
+
+summary(bd_reactiva_pyto)
+
+```
+
+<br>
+
+* Diagnósticamos la magnitud de los valores perdidos
+
+```{r   eval=TRUE,echo=TRUE }
+
+miss_var_summary(bd_reactiva_pyto)
+miss_case_summary(bd_reactiva_pyto)
+
+```
+
+<br>
+
+* Observamos:
+
+  + Que nuestras variables para el Ubigeo, los Códigos de Región y los Códigos de Provincia son de clase 'integer' y, gracias a la visualización que nos retorna ***View()***, no considera los '0' a la izquierda, lo que genera problemas con la graficación más adelante.
+
+  + Que nuestras variables para el Monto de Inversión y el Monto de Transferencia son de clase 'character' y, gracias a la misma función, que los valores tienen una ',' como separador de millares y millones.
+  
+  + Que tenemos 09 valores perdidos, todos concentrados en la fila 526.
+
+<br>
+
+* Entonces:
+
+  + Completamos los valores de 'UBIGEO', 'COD_REGION' y 'COD_PROVINCIA' con '0' hasta completar las 06 cifras.
+  
+  + Removemos el separador ',' para que reconozca nuestros valores como número y no texto, y Convertimos de 'character' a 'numeric' la clase de nuestras variables para Monto de Inversión y el Monto de Transferencia.
+  
+  + Prescindimos de la fila 526 que alberga todos nuestros casos perdidos.
+  
+  + Seleccionamos 02 conjuntos diferentes de variables que son de interés para nuestro análisis.
+  
+  + Y creamos los objetos  **'bd_reactiva_pyto_reg'** y **'bd_reactiva_pyto_prov'**.
+
+```{r   eval=TRUE,echo=TRUE }
+
+bd_reactiva_pyto_reg <- bd_reactiva_pyto %>% 
+  mutate(COD_REGION = sprintf("%06d", as.integer(COD_REGION)),
+         UBIGEO = sprintf("%06d", as.integer(UBIGEO))) %>% 
+  mutate(MONTODETRANSFERENCIA2020 = str_remove_all(MONTODETRANSFERENCIA2020, ","),
+         MONTODETRANSFERENCIA2020 = as.numeric(MONTODETRANSFERENCIA2020),
+         MONTODEINVERSIÓN = str_remove_all(MONTODEINVERSIÓN, ","),
+         MONTODEINVERSIÓN = as.numeric(MONTODEINVERSIÓN)) %>%
+  filter(row_number() != 526) %>%
+  select('UBIGEO', 'COD_REGION', 'REGION', 'TOTALEMPLEOS', 'POBLACIONBENEFICIARIA', 'MONTODEINVERSIÓN', 'MONTODETRANSFERENCIA2020', 'TIPOLOGIA') 
+
+bd_reactiva_pyto_prov <- bd_reactiva_pyto %>% 
+  mutate(COD_PROVINCIA = sprintf("%06d", as.integer(COD_PROVINCIA)),
+         UBIGEO = sprintf("%06d", as.integer(UBIGEO))) %>% 
+  mutate(MONTODETRANSFERENCIA2020 = str_remove_all(MONTODETRANSFERENCIA2020, ","),
+         MONTODETRANSFERENCIA2020 = as.numeric(MONTODETRANSFERENCIA2020),
+         MONTODEINVERSIÓN = str_remove_all(MONTODEINVERSIÓN, ","),
+         MONTODEINVERSIÓN = as.numeric(MONTODEINVERSIÓN)) %>%
+  filter(row_number() != 526) %>%
+  select( 'UBIGEO', 'COD_PROVINCIA', 'PROVINCIA', 'TOTALEMPLEOS', 'POBLACIONBENEFICIARIA', 'MONTODEINVERSIÓN', 'MONTODETRANSFERENCIA2020') 
+
+```
+
+<br>
+
+* Revisamos que nuestra nueva base de datos cuente con la información completa para el análisis regional y provincial:
+
+```{r   eval=TRUE,echo=TRUE }
+
+unique(bd_reactiva_pyto_reg$REGION)
+unique(bd_reactiva_pyto_prov$PROVINCIA)
+
+```
+
+<br>
+
+* Observamos: 
+
+  + Que casi todos las regiones, a excepción de Madre de Dios, recibieron recursos para la ejecución de proyectos de inversión pública en sus respectivas jurisdicciones. 
+
+  + Que para el caso de las provincias, el número de estas que no recibieron recursos es mucho mayor. 
+
+<br>
+
+* Entonces:
+
+  + Agregamos fila con el código correspondiente a la región faltante, Madre de Dios, y asignamos valor '0' para todas las variables excepto 'UBIGEO' y 'REGIÓN'
+  
+  + Agregamos filas con el código correspondiente a cada provincia faltante y asignamos valor '0' para todas las variables excepto para 'COD_PROVINCIAS' y 'PROVINCIA'_VALUES'.
+
+```{r eval=TRUE, echo=TRUE}
+
+# Creamos fila de región faltante
+new_file_reg = data.frame( UBIGEO = "160000",
+                           COD_REGION = "-", 
+                           REGION = "Madre de Dios",
+                           TOTALEMPLEOS = 0,
+                           POBLACIONBENEFICIARIA = 0,
+                           MONTODEINVERSIÓN = 0,
+                           MONTODETRANSFERENCIA2020 = 0,
+                           TIPOLOGIA = NA
+                           )
+# Agregamos fila
+bd_reactiva_pyto_reg2 = rbind(bd_reactiva_pyto_reg, new_file_reg)
+
+# Creamos filas para las 68 provincias faltantes
+new_files_prov = data.frame(matrix(0, nrow = 68, ncol = 7))
+colnames(new_files_prov) = c("UBIGEO", "COD_PROVINCIA", "PROVINCIA", "TOTALEMPLEOS", "POBLACIONBENEFICIARIA", "MONTODEINVERSIÓN", "MONTODETRANSFERENCIA2020")
+
+# Creamos los objetos con los valores de nuestras columnas de Código de Provincia y Provincia.
+COD_PROVINCIA_VALUES = c("010400", "010600", "020100", "020200", "020300", "020400", "020700", "020900", "021100", "021200", "021300", "021400", "021500", "021700", "022000", "030100", "030500", "040300", "040400", "040500", "040600", "040700", "040800", "050800", "061200", "080200", "080400", "080500", "080600", "081000", "081100", "081200", "081300", "100600", "100700", "100900", "101000", "110200", "110300", "110400", "120700", "120800", "130300", "130500", "130700", "130800", "140200", "150300", "150900", "160300", "160500", "160800", "170100", "170200", "170300", "180100", "180200", "190200", "200800", "210400", "220200", "230200", "230300", "230400", "240200", "250200", "250300", "250400")
+
+PROVINCIA_VALUES = c("miss_prov_01", "miss_prov_02", "miss_prov_03", "miss_prov_04", "miss_prov_05", "miss_prov_06", "miss_prov_07", "miss_prov_08", "miss_prov_09", "miss_prov_10", "miss_prov_11", "miss_prov_12", "miss_prov_13", "miss_prov_14", "miss_prov_15", "miss_prov_16", "miss_prov_17", "miss_prov_18", "miss_prov_19", "miss_prov_20", "miss_prov_21", "miss_prov_22", "miss_prov_23", "miss_prov_24", "miss_prov_25", "miss_prov_26", "miss_prov_27", "miss_prov_28", "miss_prov_29", "miss_prov_30", "miss_prov_31", "miss_prov_32", "miss_prov_33", "miss_prov_34", "miss_prov_35", "miss_prov_36", "miss_prov_37", "miss_prov_38", "miss_prov_39", "miss_prov_40", "miss_prov_41", "miss_prov_42", "miss_prov_43", "miss_prov_44", "miss_prov_45", "miss_prov_46", "miss_prov_47", "miss_prov_48", "miss_prov_49", "miss_prov_50", "miss_prov_51", "miss_prov_52", "miss_prov_53", "miss_prov_54", "miss_prov_55", "miss_prov_56", "miss_prov_57", "miss_prov_58", "miss_prov_59", "miss_prov_60", "miss_prov_61", "miss_prov_62", "miss_prov_63", "miss_prov_64", "miss_prov_65", "miss_prov_66", "miss_prov_67", "miss_prov_68" )
+
+# Integramos estos valores a nuestro objeto con las nuevas filas de las provincias faltantes.
+new_files_prov$COD_PROVINCIA = COD_PROVINCIA_VALUES
+new_files_prov$PROVINCIA = PROVINCIA_VALUES
+
+# Agregamos fila
+bd_reactiva_pyto_prov2 = rbind(bd_reactiva_pyto_prov, new_files_prov)
+
+```
+
+<br>
+
+* Finalmente generamos los objetos con la información geográfica para la graficación según los niveles que requiere nuestro análisis
+
+```{r eval=TRUE, echo=TRUE}
+
+# library(mapsPERU)
+map_reg_00 = data.frame(map_REG)
+map_prov_00 = data.frame(map_PROV)
+
+```
+
+<br>
+
+
+
+
+<br>
+
+
+## 4. Antecedentes
+
+<br>
+
+En el 2020, el gobierno peruano, mediante el Decreto de Urgencia N° 070-2020, establece medidas extraordinarias para la reactivación económica ante la emergencia sanitaria producida por el COVID 19, en materia de inversiones, gasto corriente y otras actividades para la generación de empleo.  Posteriormente, se sumaron el Decreto de Urgencia N° 114-2020 y el Decreto Supremo N.° 262-2020-EF, en los cuales se reafirma que los gobiernos regionales y locales, en el marco de sus competencias, implementen la ejecución de acciones oportunas para la reactivación de la actividad económica, fomentando el trabajo local a través del empleo de mano de obra especializada y no especializada. 
+
+Con dicho objetivo, se autorizaron la transferencia de partidas en el Presupuesto Público para el año fiscal 2020 a favor de diversos gobiernos locales para financiar la ejecución de proyectos de inversión e Inversiones de Optimización, de Ampliación Marginal, de Rehabilitación y de Reposición en materia de vías urbanas, planeamiento urbano y rural y conservación y ampliación de las áreas verdes y ornato público y saneamiento urbano y rural.
+
+Por otro lado, la inversión pública en América Latina y el Caribe (ALC), ha sido severamente afectada debido a la pandemia ocasionada por el COVID 19. El nivel promedio de inversión pública alcanzó un 3,6% del PBI, uno de los más bajos en una década; asimismo el índice de gestión de la inversión pública reporta un 2.5 de 4 puntos posibles, lo que indica una baja eficiencia (Armendariz, 2020). Sumado a lo anterior, según una investigación efectuada por el (BID, 2020), se muestra que el gasto público en la región revela un desperdicio generalizado de hasta 4,4 % del PBI de la región. En ese sentido, resulta necesario que se optimice la inversión pública mediante criterios técnicos y transparentes de priorización que a su vez generen crecimiento y empleo, ya que estos son vitales durante el periodo de reactivación económica.
+
+Los mapas generados en el presente estudio presentarán los recursos transferidos del Gobierno Nacional a los gobiernos locales a junio del 2021, lo que nos pueden dar una muestra del nivel de la cobertura de las transferencias a nivel departamental y provincial. Asimismo, se podrá conocer la relación entre el monto transferido y el número de empleos y población beneficiaria generados producto del proyecto de inversión pública.  
+
+<br>
+
+<br>
+
+## 5. Visualización y Discusión
+
+<br>
+
+#### 5.1. Distribución de Montos Transferidos por Región Y Provincia
+
+```{r eval=TRUE, echo=FALSE}
+
+tab_reg <- bd_reactiva_pyto_reg2 %>%
+  group_by(REGION) %>%
+  summarise(SUMA=sum(MONTODETRANSFERENCIA2020))
+
+tab_prov <-bd_reactiva_pyto_prov2 %>%
+  group_by(COD_PROVINCIA) %>%
+  summarise(SUMA=sum(MONTODETRANSFERENCIA2020))
+
+# library(dplyr)
+# library(sf)
+
+map_reg_01 = left_join(map_reg_00, tab_reg, by="REGION")
+map_prov_01 = left_join(map_prov_00, tab_prov, by="COD_PROVINCIA")
+
+```
+
+<br>
+
+Con ayuda de los paquetes “ggplot” y “mapsPerú”, se logró graficar la distribución de los recursos transferidos (poco menos de S/980 millones) por el Ministerio de Vivienda, Construcción y Saneamiento (MVCS) a los gobiernos locales para impulsar la inversión pública en las regiones durante la época de pandemia (2020) y, de esta manera, contribuir con la reactivación de su economía.
+
+A partir de una primera mirada regional, se puede observar que casi todos los departamentos, a excepción de Madre de Dios, recibieron recursos para la ejecución de proyectos de inversión pública en sus respectivas jurisdicciones. Asimismo, Ayacucho fue la región con más recursos recibidos (más de S/100 millones), seguida de Junín (más de S/91 millones) y Puno (más de S/84 millones). Moquegua fue la región que menos recibió, apenas un millón.
+
+```{r eval=TRUE, echo=FALSE}
+
+# library(ggplot2)
+# library(sf)
+
+ggplot(map_reg_01, aes(geometry=geometry)) +
+  geom_sf(aes(fill=SUMA)) +
+  theme_bw() +
+  labs(fill = "Nuevos Soles") +
+  labs(title = "Gráfico 05.1.1. Montos Transferidos \n por Región") +
+  scale_fill_gradient (low="snow", high="orange")
+
+#Anexo: Página de colores --> https://r-charts.com/es/colores/
+
+```
+
+<br>
+
+A nivel provincia, destaca Lima Metropolitana con más de S/79 millones transferidos para la ejecución de proyectos de inversión, bastante más atrás se encuentran las provincias de Huamanga y Huancayo con casi S/32 millones y S/28 millones transferidos, respectivamente.
+
+```{r eval=TRUE, echo=FALSE}
+
+# library(ggplot2)
+# library(sf)
+
+ggplot(map_prov_01, aes(geometry=geometry)) +
+  geom_sf(aes(fill=SUMA)) +
+  theme_bw() +
+  labs(fill = "soles") +
+  labs(title = "Gráfico 05.1.2. Montos Transferidos \n por Provincia") +
+  scale_fill_gradient (low="snow", high="orange")
+
+```
+
+<br>
+
+<br>
+
+#### 5.2. Porcentaje del Costo del Proyecto, o Monto de Inversión, cubierto por el Monto Transferidos
+
+<br>
+
+```{r eval=TRUE, echo=FALSE}
+
+bd_reactiva_pyto_reg3 <- cbind(bd_reactiva_pyto_reg2, Prcntj_CostoAsumido=c((bd_reactiva_pyto_reg2$MONTODETRANSFERENCIA2020 / bd_reactiva_pyto_reg2$MONTODEINVERSIÓN)*100))
+
+bd_reactiva_pyto_reg4 <- bd_reactiva_pyto_reg3 %>%
+  group_by(REGION) %>%
+  summarise(PromedioPorceAsumido=mean(Prcntj_CostoAsumido))
+
+# library(dplyr)
+# library(sf)
+
+map_reg_02 <- left_join(map_reg_00, bd_reactiva_pyto_reg4, by="REGION")
+
+```
+
+<br>
+
+Haciendo uso de los mismos paquetes, graficamos la participación promedio de las transferencias en la suma del monto de inversión de los proyectos de inversión pública. 
+
+```{r eval=TRUE, echo=FALSE}
+
+# library(ggplot2)
+ggplot(map_reg_02, aes(geometry=geometry)) +
+  geom_sf(aes(fill=PromedioPorceAsumido)) +
+  theme_bw() +
+  labs(fill = "Porcentaje")+
+  labs(title = "Gráfico 05.2.1. Participación de las Transferencias \n en el Monto de Inversión")+
+  #theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_gradient (low="snow", high="orange")
+
+```
+
+Se puede observar que las transferencias alcanzan a cubrir gran parte del monto de inversión de los proyectos. También se puede observar que hay regiones cuyo monto transferido supera en promedio el monto de inversión de los proyectos de inversión de dicho departamento. Adicionalmente, a partir de una mirada general, se puede observar que los departamentos cercanos a la costa (tanto del norte del sur, a excepción de Puno, Ayacucho, Amazonas y Cajamarca) lograron cubrir un mayor porcentaje de la inversión de sus proyectos, con las transferencias del Gobierno Nacional.
+
+A nivel regional, se observa que las transferencias a la región de Piura y provincia constitucional del Callao lograron superar, en promedio, el monto de inversión de sus proyectos. Esto último podría deberse al hecho de que, durante la actualización de los expedientes técnicos de algunos proyectos de inversión, se haya identificado el riesgo de adicionales durante la ejecución de la obra; o también, dado el contexto de alzas de los precios de los materiales de construcción, era necesario prever un monto más alto de inversión. Por otra parte, entre las regiones con menos inversión cubierta (menos del 80%) se encuentran Pasco, Cusco y Loreto con 79%, 77% y 74%, respectivamente.
+
+
+<br>
+
+#### 5.3. Relación entre Población Beneficiada por Proyectos Concluidos y la Población Total
+
+<br>
+
+Para el análisis de esta variable se obtuvo una base de datos con datos sobre la población total a nivel de distrito para el año 2017, la cual especificaba el UBIGEO distrital y provincial, el nombre de región, y la población regional, provincial y distrital. En estas últimas variables para el caso del nivel regional y provincial, solo se contabilizó la población correspondiente a los distritos con proyectos concluidos, ya que solo con esos se realizaría el análisis.
+
+Luego, se importó la base de datos de población a R y se unió a la base principal. Finalmente, se realizó el similar procedimiento al realizado para el análisis espacial de variables anteriores, agregando la región de Madre de Dios y generando un data frame agrupado por región con las variables de población beneficiaria con proyectos concluidos y población regional con proyectos concluidos. Así, con las esas dos últimas variables se obtuvo el porcentaje de población beneficiaria dividiendo la primera entre la segunda, para tener así su visualización en un mapa.
+
+El porcentaje de población beneficiada en la mayoría de regiones es bajo, siendo en promedio entre las 25 regiones analizadas 8.9%. Sin embargo, las regiones con mayor porcentaje de población beneficiada sí muestran importantes cifras. Lima Provincias y Ayacucho, segunda y tercera región con mayor porcentaje de población beneficiada respectivamente, llegan alrededor del 25%; es decir, alrededor de una cuarta parte de la población de distritos con proyectos concluidos como beneficiada.
+
+Asimismo, la región con mayor porcentaje es Apurímac, llegando con 38.3% a más de un tercio de la población de sus distritos analizados como beneficiada por los proyectos concluidos. Por otro lado, la regiones de Tumbes, Loreto, La Libertad, Callao, Moquegua y Ucayali presentan menos del 2% de su población beneficiada en distritos con proyectos concluidos.
+
+Así, si bien no hay un patrón absoluto se puede reconocer que la zonas Norte y Oriente del país han tenido una menor proporción de su población beneficiada en distritos con proyectos concluidos. A esta zona le seguiría la zona Sur del país; mientras que, la zona Centro sería la de mayor proporción de población beneficiada.
+
+Los factores que han llevado a esa diferencia entre las zonas del país pueden ser diversos, entre ellas proyectos más pequeños desarrollados en las zonas menos beneficiadas, menor cantidad de recursos dispuestos para esas zonas, menor capacidad de las municipalidades locales para concluir los proyectos, entre otros.
+
+
+
+```{r eval=TRUE, echo=FALSE}
+
+library(readr)
+link<- ("https://raw.githubusercontent.com/Diane-12/BD_Pytoreactiva/main/reporte.csv")
+pob <- read.csv(link)
+#sapply(pob, class) #para conocer las clases de cada variable
+
+bdpob = bd_reactiva_pyto |>
+  left_join(pob[c(1,5,6,7)], by = "UBIGEO")
+
+pb_reg<-bdpob |>
+  group_by(REGION) |> 
+  summarize(pob_ben=sum(`POBLACIONBENEFICIARIA`[`ESTADO`=="Concluido"]),
+            pob_reg=mean(POB_REG[`ESTADO`=="Concluido"]))
+
+pb_reg<-pb_reg |>
+  mutate(porc_pb=(pob_ben/pob_reg)*100)
+
+new_file_reg2=data.frame(REGION="Madre de Dios", pob_ben=NA, pob_reg=NA, porc_pb=NA)
+pb_reg=rbind(pb_reg,new_file_reg2)
+  
+pb_reg2 <- left_join(pb_reg, map_reg_00, by="REGION")
+
+library(ggplot2)
+ggplot(pb_reg2, aes(geometry=geometry)) +
+  geom_sf(aes(fill=porc_pb)) +
+  theme_bw() +
+  labs(fill = "Porcentaje ")+
+  labs(title = "Gráfico 05.3.1. Porcentaje de Población Beneficiaria \n por Región")+  
+  scale_fill_gradient (low="snow", high="orange")
+
+```
+
+
+#### 5.4. Relación entre Empleos Generados y Monto de Transferencia:
+
+A partir de nuestras bases de datos procesadas generamos el objeto específico para nuestro análisis, una base de datos con con el número de empleos generados, los Montos de Inversión y los Montos de Transferencia agrupados por región y provincia.
+
+```{r eval=TRUE, echo=FALSE}
+
+# Por Región:
+emp_mont_reg <- bd_reactiva_pyto_reg2 %>%
+  group_by(REGION) %>%
+  summarise("Total_Empleos" = sum(TOTALEMPLEOS), "Monto_de_Inversión" = sum(MONTODEINVERSIÓN), "Monto_de_Transferencia" = sum(MONTODETRANSFERENCIA2020)) 
+
+# Por Provincia:
+emp_mont_prov <- bd_reactiva_pyto_prov2 %>%
+  group_by(PROVINCIA) %>%
+  summarise("Total_Empleos" = sum(TOTALEMPLEOS), "Monto_de_Inversión" = sum(MONTODEINVERSIÓN), "Monto_de_Transferencia" = sum(MONTODETRANSFERENCIA2020))
+
+```
+
+<br>
+
+Luego cruzamos las variables Monto de Transfrencia con Total de Empleos y observamos una correspondencia directa. 
+se mentiene si obsevamos la correspondencia entre Total de Empelos y Monto de Transferencia, aunque con una mayor dispersión de los casos. Esto se debe principalmente a que los recursos transferidos cubren diferentes porcentajes del monto de inversión de los proyectos.
+
+```{r eval=TRUE, echo=FALSE}
+
+# Por Región:
+ggplot(emp_mont_reg, aes(x = Total_Empleos, y = Monto_de_Transferencia)) + 
+  geom_point() +
+  ggtitle("Grafico Relación entre Total de Empelos y el Monto de Inversión a nivel Regional ") +
+  xlab("Total Empleos") +
+  ylab("Monto de Inversión") +
+  scale_x_continuous(limits = c(0, 1200), labels = scales::comma) +
+  scale_y_continuous(limits = c(1000, 21000000), labels = scales::comma) +
+  theme_classic()
+
+# Por Provincia:
+ggplot(emp_mont_prov, aes(x = Total_Empleos, y = Monto_de_Transferencia)) + 
+  geom_point() +
+  ggtitle("Relación entre Total de Empelos y el Monto de Inversión a nivel Provincial ") +
+  xlab("Total Empleos") +
+  ylab("Monto de Inversión") +
+  scale_x_continuous(limits = c(0, 1200), labels = scales::comma) +
+  scale_y_continuous(limits = c(1000, 21000000), labels = scales::comma) +
+  theme_classic()
+
+```
+
+<br>
+
+Cuando cruzamos las variables de monto de inversión con total de empleos, notamos que ambas describen una relación directamente proporcional tanto a nivel regional como provincial. Mientras mayor la inversión, mayor los empleos generados.
+
+```{r eval=TRUE, echo=FALSE}
+
+# Por Región:
+ggplot(emp_mont_reg, aes(x = Total_Empleos, y = Monto_de_Inversión)) + 
+  geom_point() +
+  ggtitle("Relación entre Total de Empelos y el Monto de Inversión a nivel Regional ") +
+  xlab("Total Empleos") +
+  ylab("Monto de Inversión") +
+  scale_x_continuous(limits = c(0, 1200), labels = scales::comma) +
+  scale_y_continuous(limits = c(1000, 21000000), labels = scales::comma) +
+  theme_classic()
+
+# Por Provincia:
+ggplot(emp_mont_prov, aes(x = Total_Empleos, y = Monto_de_Inversión)) + 
+  geom_point() +
+  ggtitle("Relación entre Total de Empleos y el Monto de Inversión a nivel Provincial ") +
+  xlab("Total Empleos") +
+  ylab("Monto de Inversión") +
+  scale_x_continuous(limits = c(0, 1200), labels = scales::comma) +
+  scale_y_continuous(limits = c(1000, 21000000), labels = scales::comma) +
+  theme_classic()
+
+```
+
+<br>
+
+De los gráficos generados podemos observar que existe una relación directa proporcionalmente entre el Total de Empleos y los Montos de Transferencia y Montos de Inversión. Esta relación estaría principalmente sustentada sobre la relación entre Monto de Inversión del Proyecto y Total de Empleos, y esta se refleja en la relación con el Monto de Transferencia. 
+
+<br>
+
+#### 5.5. Monto de inversión por tipo de intervención
+
+Del total de 525 proyectos de inversión pública a nivel nacional, el 85% (447) corresponde a "Pista y vereda", el 14,5% (76) a "Equipamiento urbano"  y menos del 1% a "Puentes".
+
+```{r eval=TRUE, echo=FALSE}
+bd_reactiva_pyto_reg %>%
+  group_by(TIPOLOGIA) %>%
+  summarise(count=n()) %>%
+  ggplot(aes(x=reorder(TIPOLOGIA, (-count)), y=count)) +
+  geom_col(colour="black") +
+  geom_bar(stat = "identity", fill="orange", color="grey40") +
+  theme_bw() +
+  #coord_flip() +
+  geom_text(aes(label=after_stat(y), fontface= "bold"), vjust=-0.2) +
+  theme(legend.title = element_blank()) +
+  labs(x=" ", y=" ", title = "GRAFICO 04. NÚMERO DE PROYECTOS POR TIPO", subtitle= " ")
+
+```
+
+
+Del total de 525 proyectos de inversión pública a nivel nacional, el 85% (447) corresponde a "Pista y vereda", el 14,5% (76) a "Equipamiento urbano"  y menos del 1% a "Puentes". El mayor porcentaje de montos transferidos a nivel nacional corresponde a "Pista y vereda" con 934 mil millones (95%), seguido de "Equipamiento urbano" (4%) y finalmente Puente (1%).
+
+```{r eval=TRUE, echo=FALSE}
+bd_reactiva_pyto_reg %>%
+  group_by(TIPOLOGIA) %>%
+  summarise(SOLES=sum(MONTODETRANSFERENCIA2020)) %>%
+  ggplot(aes(x=reorder(TIPOLOGIA, (-SOLES)), y=SOLES, fill=TIPOLOGIA)) +
+  geom_col(colour="black") +
+  geom_bar(stat = 'identity', fill="orange", color="grey40") +
+  theme_bw() +
+  geom_text(aes(label=scales::comma(round(SOLES/1000), accuracy = 1), fontface="bold"), vjust=-0.2) +
+  #scale_y_continuous(labels = label_dollar())
+  labs(x=" ", y=" ", title = "GRAFICO 05. MONTOS TRANSFERIDOS POR TIPO DE PROYECTO", subtitle= "Millones de soles") +
+  theme(legend.position = "none") +
+  theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+
+```
+
+<br>
+
+La diferencia entre el monto transferido y el costo del proyecto es notoria sobretodo en en el tipo de proyecto "Pista y vereda". Lo que nos da una idea de que, los costos de los proyectos en el marco de Reactiva son mayores a los costos transferidos para su realización al periodo junio del 2021. Estos resultados podrán verificarse a nivel regional y provincial.
+
+```{r eval=TRUE, echo=FALSE}
+
+library(ggplot2)
+#install.packages("ggplot")
+#library(ggplot)
+library(reshape2)
+#install.packages("magrittr")
+library(tidyr)
+#install.packages("scales")
+library(scales)
+library(dplyr)
+
+#Creación de tabla de resumen:
+TABLA4 <-bd_reactiva_pyto_reg %>%
+  group_by(TIPOLOGIA) %>%
+  summarise(TRANSFERENCIA=sum(MONTODETRANSFERENCIA2020), COSTO_INVERSION=sum(MONTODEINVERSIÓN))
+View(TABLA4)
+
+View(bd_reactiva_pyto_reg)
+
+#Creación de gráfico
+
+df_1 <- TABLA4 |>
+  pivot_longer(cols = TRANSFERENCIA:COSTO_INVERSION, names_to= "soles", values_to = "valor" )
+#View(df_1)
+
+ggplot(df_1, aes(x=TIPOLOGIA, y=valor, fill=soles)) +
+  geom_bar(position = position_dodge(width=0.9), stat="identity") +
+  geom_text(aes(label=scales::comma(round(valor/1000000)), hjust=1.15,  fontface="bold"), position=position_dodge(width=0.9) ) +
+  theme_bw() +
+  scale_y_continuous(label = label_number()) +
+  theme(legend.title = element_blank()) +
+  labs(x=" ", y=" ", title = "GRAFICO 06. MONTO TRANSFERIDO \n Y COSTO DE PROYECTO POR TIPO", subtitle= "Millones de soles") +
+  coord_flip()
+
+```
+
+## 6. Conclusiones:
+
+
+
+## 7. Referencias
+
+<br>
+
+Notas:
+
+[^1]: Elaborados con una metodología que combina datos del Censo de Población y Vivienda 2017 (CPV), la Encuesta Nacional de Hogares 2017-2018 (ENAHO) y otras fuentes de datos.
+
+<br>
+
+Bibliografía:
+
+Armendariz, E. (Junio de 2020). Hacer más con menos: Recomendaciones para mejorar la inversión pública en la post-pandemia. Obtenido de https://blogs.iadb.org/gestion-fiscal/es/hacer-mas-con-menos-recomendaciones-inversion-publica/
+
+BID. (2020). Estudio BID-OCDE instan a fortalecer gobernanza e integridad en América Latina y el Caribe. Obtenido de https://www.iadb.org/es/noticias/estudio-bid-ocde-instan-fortalecer-gobernanza-e-integridad-en-america-latina-y-el-caribe
+
+INEI. (2018). Mapa de Pobreza monetaria provincial y distrital . Lima.
+
+<br>
+
+----

@@ -1,0 +1,84 @@
+# SESIÓN 1: ANÁLISIS DE COMPONENTES PRINCIPALES -----
+
+# Librerías necesarias
+
+install.packages("psych")
+install.packages("factoextra")
+
+library(psych)
+library(tidyverse)
+library(ggrepel)
+library(factoextra)
+
+# EJERCICIO 1: ACP en un estudio criminológico ------
+
+## PASO 0: Data y subdata---- 
+?USArrests
+data<-USArrests
+
+# Crear una subdata con las variables numéricas que se van a utilizar en el ACP
+subdata<-USArrests |> select(1,2,4)
+View(subdata)
+summary(subdata)
+
+subdata |> ggplot(aes(x=Murder, y=Assault)) + geom_point()
+subdata |> ggplot(aes(x=Murder, y=Rape)) + geom_point()
+subdata |> ggplot(aes(x=Rape, y=Assault)) + geom_point()
+
+### 1.2. Matriz de correlación ------
+
+## Analizar las relaciones entre las variables (Matriz de correlaciones)
+## Para aplicar un PCA, se necesita que los atributos estén correlacionados. 
+matrixcor<-cor(subdata)
+matrixcor
+
+cor.plot(matrixcor)
+
+## PASO 2: Verificación de supuestos sobre la matrixcor -----
+
+### 2.1. Kaiser-Meyer-Olkin (KMO) -----
+### Midel el nivel de correlación global en nuestra data. 
+### KMO devuelve valores entre 0 y 1. Queremos que salga lo más cercano al 1.
+### Recomendable a partir de 0.6. Ojo, referencial. 
+
+psych::KMO(subdata)
+
+### 2.2 Prueba de Esfericidad de Bartlett ----
+cortest.bartlett(matrixcor,n=dim(subdata)[1])
+
+## PASO 3: PCA -----
+
+### 3.1 Determinar el número de componentes ----
+### Podemos utilizar el gráfico de sedimentación. 
+### Normalmente el criterio es que el eigenvalue sea mayor a 1. 
+### Buscamos el punto de quiebre (codo) en el gráfico.
+
+scree(subdata, pc=TRUE, factors=FALSE)
+
+### O también el análisis paralelo (utiliza simulaciones con bootstrap). 
+### En este caso explícitamente nos recomienda un número de componentes.
+
+fa.parallel(subdata,fa="pc")
+
+### 3.2 Cálculo de los componentes principales ----
+pc <- prcomp(x=subdata,scale=TRUE, center=TRUE)
+
+## PASO 4: Interpretación -----
+
+# Siempre se obtienen tantos componentes como variables.
+
+### 4.1 Variabilidad explicada ----
+### % de varianza explicada
+summary(pc)
+fviz_eig(pc)
+
+### 4.2 Loadings o cargas de cada PC ----
+pc$rotation
+
+### 4.3 Visualización ----
+
+fviz_pca_ind(pc)
+
+fviz_pca_var(pc)
+
+biplot(pc)

@@ -91,3 +91,13 @@ camp_seg_goles<-world_cups_matches |>
 world_cups |> 
   left_join(camp_seg_goles[c(1,2,3)],by="Year") |> 
   view()
+
+# Solución 
+world_cups_matches |> 
+  mutate(goles_campeon=case_when(`Home Team Name`=="Winner"~`Home Team Goals`, 
+                                 `Away Team Name`=="Winner"~`Home Team Goals`,
+                                 TRUE ~ 0))  |> 
+  group_by(Year) |> 
+  summarise(sum(goles_campeon)) |> 
+  view()
+

@@ -1,0 +1,222 @@
+---
+title: "SESIÓN 05: Datos Perdidos"
+author: "Leonel Figueroa"
+date: "22.Ene.2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Aproximaciones metodológicas a la minería de datos
+
+Ciencia de Datos = C( "A" = ("")
+
+[{ Business Understanding : 
+
+("Determine Bussiness Objectives" : {"Background", "Business Objectives", "Business Succes Criteria"}),
+("Asses Situation" : {"Inventory of Resources", "Requirements, assumptions ands constraints", "Risks and Contingencies", "Terminology", "Costs and Benefits"}),
+("Determine Data Mining Goals" : {"Data Mining Goals", "Data Mining Success Criteria"}),
+(Produce Project Plan : {"Project Plan", "Initial Assesment of Tools and Techniques"})
+
+Data Understanding : 
+("Collect Initial Data" : {"Initial Data Collection Report"}),
+("Describe Data" : {"Data Description Report"}),
+("Explora Data" : {"Data Exploration Report"}),
+("Verify Data Quality" : {"Data Quality Report"})
+
+Data preparation :
+("Data Set" : {"Data Set Description"}),
+("Select Data" : {"Rationale for Inclusion/Exclusion}),
+("Clean Data" : {"Data Cleaning Report"}),
+("Construct Data" : "Derived Attributes Generated Records")
+
+Modeling
+
+Evaluation
+
+Deployment
+
+}]
+
+
+### **Principales Problemas:**
+
+*Impresión:* Problemas de instrumento de medición y errores de digitación.
+
+*Falta de Registros:* Alguna persona entrevistada en una encuesta no ha respondido una de las preguntas del cuestionario.
+
+*Inconsistencia:* En una misma data existen formatos diferentes para las mismas variables. Ejemplo: Existe la variable edad (en años) y la fecha de nacimiento y no coinciden.
+
+*Interpretabilidad:* Códigos de respuesta (categorías) poco claros y no explícitos
+
+
+
+### **Ideas preliminares:**
+
+* No siempre existe la disponibilidad total de los datos
+
+* Principales causas:
+
+  + Mal funcionamiento del recojo de datos
+  
+  + Inconsistencia con otros datos registrados y por lo tanto eliminados
+  
+  + Problemas de Redacción
+  
+  + Cambio en los datos
+  
+* Se puede plantear la necesidad de completar esos valores.
+
+* La mayor parte de las metodologías para imputación de valores perdidos tuvo su origen en tratamiento de perdidos en encuestas por muestreo.
+
+
+
+### **¿Qué tan grave es el problema?**
+
+Algunos parámetros referenciales:
+
+  <span style="color:blue"> *1% = IRRELEVANTE :* </span> No causa preocupación, posibilidad de elimintar.
+  
+  <span style="color:orange"> *1 - 5% = MANEJABLE :* </span> Empezar diagnóstico e imputar.
+  
+  <span style="color:orange"> *5 - 15% = MÉTODOS SOFISTICADOS:* </span> En algunos casos hay modelos que se adecúan a ciertos problemas de investigación. Deben indaar sobre qué método es el más adecuado. 
+  
+  <span style="color:red"> *+ 15% = INTERPRETACIÓN PERJUDICIAL* </span>
+
+
+
+### **EJEMPLO EN R**
+
+```{r}
+library(pacman)
+p_load("VIM","DEoptimR","minqa","nloptr","simputation", "mice", "tidyverse", "DMwR2", "naniar") #Instalamos los paquetes que vamos a necesitar
+
+data(tao, package ="VIM") # Aunque puede jalar el objeto sin necesidad de especificar el paquete, cuando no especificamos podría jalarme un objeto de nombre similar en otro paquete.
+```
+
+* La función **'summary()'** nos regresa un resumen con los estadísticos generales de nuestro objeto agrupados y presentados por las variables de nuestro objeto.
+
+```{r}
+summary(tao)
+```
+
+* La función **'head()'** nos regresa los primeros o últimos elemento de la primera dimensión de nuestro objeto, es decir, las filas. Por default, se seleccionan las primeras o últimas 06 filas.
+
+```{r}
+head(tao)
+```
+
+* La función **'help()'** podemos pedir la información básica de los objetos 'tao' y los valores perdidos o 'NA'
+
+```{r eval=FALSE, include=FALSE}
+help(tao) 
+help(NA)
+```
+
+La importancia de **identificar valores perdidos** está en que podemos utilizar esa información para **filtrar nuestra data** y poder **estimar la magnitud del problema**. Para eso necesitamos usar las siguientes funciones:
+
+* La función **'any_na()'** nos regresa un valor boleano identificando si existen o no valores perdidos en nuestro objeto.
+
+```{r}
+any_na(tao)
+```
+
+Si queremos saber cuántos de nuestros valores son valores perdidos y cuántos no, podemos usar 02 funciones. 
+
+* La función **'n_miss()'** nos regresa el número de valores perdidos en nuestro objeto. Puede considerarse como sustito de *'sum(is.na(data))'*
+
+* La función **'n_complete()'** nos regresa el número de valores completos en nuestro objeto. Se considero un complemento a *'n_miss()'*
+
+```{r}
+n_miss(tao)
+n_complete(tao)
+```
+
+* La función **'prop_miss()'** nos regresa la **proporción** de valores perdidos en nuestro objeto o una variable específica dentro de esta.
+
+```{r}
+prop_miss(tao) 
+prop_miss(tao$Sea.Surface.Temp)
+```
+
+* La función **'pct_miss()'** nos regresa el **porcentaje** de valores perdidos en nuestro objeto o una variable específica dentro de esta.
+
+```{r}
+pct_miss(tao)
+pct_miss(tao$Air.Temp)
+```
+
+Podemos también identificar nuestros valores perdidos según las variables de nuestro objeto.
+
+* La función **'miss_var_summary(tao)'** nos regresa un resumen en la forma de una tabla tidy o tibble del número de valores perdidos y el porcentaje que representan agrupados por variable. Por default (order=TRUE), se ordena de acuerdo a la mayor cantidad de valores perdidos, de lo contrario imputar 'order=FALSE' para ordenar las variables en el orden del insumo.
+
+* La función **'miss_var_table(tao)'** nos regresa una tabla tidy o tible con el número de variables con "n" valores perdidos y el porcentaje que representan respecto del total de variables agrupados por el número de valores perdidos por variable (n=0,1,2,...). 
+
+```{r}
+miss_var_summary(tao)
+miss_var_table(tao)
+```
+
+Podemos también identificar nuestros valores perdidos según cada caso de nuestro objeto, es decir, cada fila:
+
+* La función **'miss_case_summary(tao)'** nos regresa una tabla tidy o tibble con los casos de nuestro objeto, el número de valores perdidos por caso, y el porcentaje que representan los valores perdidos respecto del total de valores, perdidos y completos.
+
+* La función **'miss_case_table(tao)'** nos regresa una tabla tidy o tibble con el número de valores perdidos por caso (0,1,2,...,n), el número de casos con 'n' valores perdidos por caso, y el porcentaje que representa el número de casos con 'n' valores perdidos respecto del total de casos.La tabla se agrupa según los valores del número de valores perdidos por caso.
+
+```{r}
+miss_case_summary(tao)
+miss_case_table(tao) 
+```
+
+### **Lo graficamos...**
+
+* Con la función **'vis_miss()'** nos regresa un gráfico o ggplot sobre la presención y concentración de valores perdidos en nuestro objeto. El negro indica los valores perdidos y el gris los valores completos.
+
+```{r}
+vis_miss(tao)
+```
+
+* Con la función **'gg_miss_case()'** nos regresa un gráfico o ggplot con el número de valores perdidos por caso. Puede ser considerado como el análogo visual de **'miss_case_summary?**
+
+```{r}
+gg_miss_case(tao)
+```
+
+* Con la función **'gg_miss_upset()'** nos regresa
+# Valores perdidos de acuerdo a posibles combinaciones
+
+```{r}
+gg_miss_upset(tao) 
+```
+
+## Including Plots ##
+
+You can also embed plots, for example:
+
+```{r echo=TRUE}
+plot(pressure)
+
+# Podemos utilizar el Aggregation plot
+a = aggr(tao,numbers=T) 
+a # Nos da un pequeño resumen sobre nuestras variables
+summary(a)
+aggr(tao,numbers=T, sortComb=TRUE, sortVar=TRUE, only.miss=TRUE)
+
+# IDENTIFICACIÓN DE PATRÓN DE VP ----
+
+## Mecanismo completamente aleatorio (MCAR)?  
+## O mecanismo aleatorio (MAR)?
+
+matrixplot(tao)
+# Foto de tu dataset en colores.
+# Rojo: Los datos faltantes
+# Escala de grises según valores de vectores numéricos
+# Para poder inspeccionar necesitamos que la gráfica sea interactiva y utilizamos x11()
+x11()
+VIM::pbox(tao[4:6], pos=1)
+
+```
+
+
